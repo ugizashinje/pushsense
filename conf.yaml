@@ -1,0 +1,6 @@
+db:
+  url: user=admin password=xuuoH8FXDSTQkWFA7QRg host=localhost port=5432 dbname=dev sslmode=disable
+collections:
+  vehicles:
+    sql : select * from vehicles
+
