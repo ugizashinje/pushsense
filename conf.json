@@ -1,0 +1,38 @@
+{
+  "db": {
+    "url": "user=admin password=xuuoH8FXDSTQkWFA7QRg host=localhost port=5432 dbname=dev sslmode=disable"
+  },
+  "typesense": {
+    "url": "http://localhost:8108",
+    "apiKey": "xyz",
+    "connectionTimeout": 5,
+    "circuitBreakerMaxRequest": 50,
+    "circuitBreakerMaxInterval": 120,
+    "circuitBreakerMaxTimeout": 60
+  },
+  "collections": {
+    "warrants": {
+      "tableName": "warrants",
+      "sql": "select * from warrants where updated_at >= $1 LIMIT 100",
+      "processors" : {
+        "passengers" : "stringArray"
+      },
+      "schema" : {
+        "name": "warrants",  
+        "fields": [
+          {"name": ".*", "type": "auto" }
+        ]
+      }
+    },
+    "users": {
+      "tableName": "users",
+      "sql": "select * from users where updated_at >= $1 LIMIT 100",
+      "schema" : {
+        "name": "users",  
+        "fields": [
+          {"name": ".*", "type": "auto" }
+        ]
+      }
+    }
+  }
+}
