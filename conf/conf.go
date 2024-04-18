@@ -18,7 +18,7 @@ type Config struct {
 type Entry struct {
 	Sql        string                              `json:"sql"`
 	TableName  string                              `json:"tableName"`
-	Processors []string                            `json:"processors"`
+	Processors map[string]string                   `json:"processors"`
 	Schema     api.CreateCollectionJSONRequestBody `json:"schema"`
 }
 type DbConfig struct {

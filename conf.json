@@ -11,25 +11,13 @@
     "circuitBreakerMaxTimeout": 60
   },
   "collections": {
-    "warrants": {
-      "tableName": "warrants",
-      "sql": "select * from warrants where updated_at >= $1 LIMIT 100",
-      "processors" : {
-        "passengers" : "stringArray"
-      },
-      "schema" : {
-        "name": "warrants",  
-        "fields": [
-          {"name": ".*", "type": "auto" }
-        ]
-      }
-    },
     "users": {
       "tableName": "users",
       "sql": "select * from users where updated_at >= $1 LIMIT 100",
       "schema" : {
         "name": "users",  
         "fields": [
+          {"name": "is_active", "type": "bool"},
           {"name": ".*", "type": "auto" }
         ]
       }

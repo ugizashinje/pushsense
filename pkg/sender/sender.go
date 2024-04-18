@@ -3,6 +3,7 @@ package sender
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ugizashinje/pushsense/conf"
@@ -28,20 +29,31 @@ func init() {
 func CreateCollection(collection string, schema api.CreateCollectionJSONRequestBody) (*api.CollectionResponse, error) {
 	_, err := client.Collection(collection).Delete(context.Background())
 	if err != nil {
-		fmt.Println("Failed to delete collection ", collection)
+		fmt.Println("No collection with name ", collection)
 	}
 	return client.Collections().Create(context.Background(), &schema)
 }
 func Send(collection string, dbdata []map[string]any) error {
 	params := &api.ImportDocumentsParams{
 		Action:    pointer.String("create"),
-		BatchSize: pointer.Int(100),
+		BatchSize: pointer.Int(1000),
 	}
 	data := []any{}
 	for _, i := range dbdata {
 		data = append(data, i)
 	}
-	_, err := client.Collection(collection).Documents().Import(context.Background(), data, params)
+	res, err := client.Collection(collection).Documents().Import(context.Background(), data, params)
+	if err == nil {
+		fmt.Printf("Uploaded %d documents \n", len(res))
+	}
+	return err
+}
+func Delete(collection string, dbdata []string) error {
+	filter := "id:[" + strings.Join(dbdata, ",") + "]"
+	params := &api.DeleteDocumentsParams{
+		FilterBy: &filter,
+	}
 
+	_, err := client.Collection(collection).Documents().Delete(context.Background(), params)
 	return err
 }

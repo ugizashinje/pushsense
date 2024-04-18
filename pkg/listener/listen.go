@@ -2,7 +2,6 @@ package listener
 
 import (
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/GoWebProd/uuid7"
@@ -67,18 +66,14 @@ func Start() {
 		if err.Error() == "sql: no rows in result set" {
 			_, err = db.Exec(startLog, name)
 			if err != nil {
-				fmt.Println("ERROR", err)
-				os.Exit(6)
+				panic(err)
 			}
 		} else if err != nil {
-			fmt.Println("Fatal:" + err.Error())
-			os.Exit(1)
+			panic(err)
 		}
-		fmt.Println(name, colConfig)
 		_, err = sender.CreateCollection(name, colConfig.Schema)
 		if err != nil {
-			fmt.Printf("Failed creating collection %s because %s \n", name, err.Error())
-			os.Exit(5)
+			panic(err)
 		}
 		go listenCollection(name, colConfig)
 	}
@@ -93,19 +88,31 @@ func listenCollection(collection string, colConfig conf.Entry) {
 		if err != nil {
 			fmt.Println("ERROR: ", err.Error())
 		}
-		colTypes, err := rows.ColumnTypes()
-		for _, s := range colTypes {
-			fmt.Println("cols type:", s.Name(), s.DatabaseTypeName())
-		}
+		// colTypes, err := rows.ColumnTypes()
+		// for _, s := range colTypes {
+		// 	fmt.Println("cols type:", s.Name(), s.DatabaseTypeName())
+		// }
 		allUpdates := []map[string]any{}
+		allDeletions := []string{}
 		for rows.Next() {
 			mapRow := make(map[string]any)
 			err = rows.MapScan(mapRow)
 			if err != nil {
 				fmt.Println("ERROR: ", err)
 			}
-			allUpdates = append(allUpdates, mapRow)
+			if mapRow["is_deleted"] == true {
+				id := mapRow["id"]
+				allDeletions = append(allDeletions, id.(string))
+			} else {
+				allUpdates = append(allUpdates, mapRow)
+			}
 
+			for k, v := range colConfig.Processors {
+				_, ok := mapRow[k]
+				if ok {
+					mapRow[k] = processors[v](mapRow[k])
+				}
+			}
 			updatedAt, ok := mapRow["updated_at"]
 			if ok {
 				curent, ok := updatedAt.(time.Time)
@@ -113,13 +120,26 @@ func listenCollection(collection string, colConfig conf.Entry) {
 					latest = curent
 				}
 			}
-			// fmt.Println("last updated", mapRow["updated_at"])
 		}
-		sender.Send(collection, allUpdates)
+		if len(allDeletions) > 0 {
+			err = sender.Delete(collection, allDeletions)
+			if err != nil {
+				fmt.Println("Error deleting ", err.Error())
+			}
+		}
+		if len(allUpdates) > 0 {
+			err = sender.Send(collection, allUpdates)
+			if err != nil {
+				fmt.Println("Error sending ", err.Error())
+			}
+		}
+
 		_, err = db.Exec(logPush, collection, latest)
 		if err != nil {
 			fmt.Println("ERROR", err.Error())
 		}
-		time.Sleep(time.Second)
+		if len(allUpdates) < 100 {
+			time.Sleep(time.Second * 10)
+		}
 	}
 }
