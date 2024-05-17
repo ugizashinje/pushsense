@@ -2,7 +2,6 @@ package conf
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"os"
 
@@ -19,6 +18,7 @@ type Entry struct {
 	Sql        string                              `json:"sql"`
 	TableName  string                              `json:"tableName"`
 	Processors map[string]string                   `json:"processors"`
+	Mapping    map[string]string                   `json:"mapping"`
 	Schema     api.CreateCollectionJSONRequestBody `json:"schema"`
 }
 type DbConfig struct {
@@ -34,20 +34,28 @@ type TypesenseConfig struct {
 	CircuitBreakerMaxTimeout  int    `json:"circuitBreakerMaxTimeout"`
 }
 
+func getenv(key, fallback string) string {
+	value := os.Getenv(key)
+	if len(value) == 0 {
+		return fallback
+	}
+	return value
+}
+
 func init() {
 	var config Config
-	dir := "./"
+	configFile := getenv("PUSHSENSE_CONFIG_FILE", "/app/config/conf.json")
 
-	jsonFile, err := os.ReadFile(dir + "conf.json")
+	jsonFile, err := os.ReadFile(configFile)
 	if err != nil {
-		log.Fatal("jsonConfig.Get err  # ", err.Error())
+		log.Fatal("cant read  "+configFile, err.Error())
 	}
 	err = json.Unmarshal(jsonFile, &config)
 	if err != nil {
 		log.Fatalf("Unmarshal: %v", err)
 		os.Exit(1)
 	}
-	fmt.Println(config.Db.Url)
+	log.Println("database connected")
 	DB = config.Db
 	Collections = config.Collections
 	Typesense = config.Typsense

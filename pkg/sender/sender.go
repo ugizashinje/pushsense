@@ -3,6 +3,7 @@ package sender
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -35,7 +36,7 @@ func CreateCollection(collection string, schema api.CreateCollectionJSONRequestB
 }
 func Send(collection string, dbdata []map[string]any) error {
 	params := &api.ImportDocumentsParams{
-		Action:    pointer.String("create"),
+		Action:    pointer.String("upsert"),
 		BatchSize: pointer.Int(1000),
 	}
 	data := []any{}
@@ -43,8 +44,10 @@ func Send(collection string, dbdata []map[string]any) error {
 		data = append(data, i)
 	}
 	res, err := client.Collection(collection).Documents().Import(context.Background(), data, params)
-	if err == nil {
-		fmt.Printf("Uploaded %d documents \n", len(res))
+	if res[0].Success {
+		fmt.Printf("Uploaded %d documents in %s \n", len(res), collection)
+	} else {
+		log.Printf("Failed to upload to %s with error ", collection, res[0].Error)
 	}
 	return err
 }

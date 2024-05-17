@@ -1,12 +1,14 @@
 package listener
 
 import (
-	"fmt"
+	"log"
 	"time"
 
 	"github.com/GoWebProd/uuid7"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 	_ "github.com/lib/pq"
+	"github.com/stoewer/go-strcase"
 	"github.com/ugizashinje/pushsense/conf"
 	"github.com/ugizashinje/pushsense/pkg/sender"
 )
@@ -82,25 +84,48 @@ func Start() {
 
 func listenCollection(collection string, colConfig conf.Entry) {
 	latest := time.Time{}
-
+	typeMapping := map[string]string{}
+	for _, field := range colConfig.Schema.Fields {
+		typeMapping[field.Name] = field.Type
+	}
 	for {
 		rows, err := db.Queryx(colConfig.Sql, latest)
 		if err != nil {
-			fmt.Println("ERROR: ", err.Error())
+			log.Println("ERROR: ", err.Error())
+			panic(err)
 		}
-		// colTypes, err := rows.ColumnTypes()
-		// for _, s := range colTypes {
-		// 	fmt.Println("cols type:", s.Name(), s.DatabaseTypeName())
-		// }
 		allUpdates := []map[string]any{}
 		allDeletions := []string{}
 		for rows.Next() {
+			rawRow := make(map[string]any)
 			mapRow := make(map[string]any)
-			err = rows.MapScan(mapRow)
-			if err != nil {
-				fmt.Println("ERROR: ", err)
+			err = rows.MapScan(rawRow)
+
+			for k, v := range rawRow {
+				key := k
+				if mapped, ok := colConfig.Mapping[k]; ok {
+					key = mapped
+				} else {
+					key = strcase.LowerCamelCase(k)
+				}
+				if t, ok := typeMapping[k]; ok {
+					switch t {
+					case "string[]":
+						instance := pq.StringArray{}
+						instance.Scan(v)
+						mapRow[key] = instance
+					default:
+						mapRow[key] = v
+					}
+				} else {
+					mapRow[key] = v
+
+				}
 			}
-			if mapRow["is_deleted"] == true {
+			if err != nil {
+				log.Println("ERROR: ", err)
+			}
+			if mapRow["isDeleted"] == true {
 				id := mapRow["id"]
 				allDeletions = append(allDeletions, id.(string))
 			} else {
@@ -113,7 +138,7 @@ func listenCollection(collection string, colConfig conf.Entry) {
 					mapRow[k] = processors[v](mapRow[k])
 				}
 			}
-			updatedAt, ok := mapRow["updated_at"]
+			updatedAt, ok := mapRow["updatedAt"]
 			if ok {
 				curent, ok := updatedAt.(time.Time)
 				if ok && !curent.Before(latest) {
@@ -124,19 +149,19 @@ func listenCollection(collection string, colConfig conf.Entry) {
 		if len(allDeletions) > 0 {
 			err = sender.Delete(collection, allDeletions)
 			if err != nil {
-				fmt.Println("Error deleting ", err.Error())
+				log.Println("Error deleting ", err.Error())
 			}
 		}
 		if len(allUpdates) > 0 {
 			err = sender.Send(collection, allUpdates)
 			if err != nil {
-				fmt.Println("Error sending ", err.Error())
+				log.Println("Error sending ", err.Error())
 			}
 		}
 
 		_, err = db.Exec(logPush, collection, latest)
 		if err != nil {
-			fmt.Println("ERROR", err.Error())
+			log.Println("ERROR", err.Error())
 		}
 		if len(allUpdates) < 100 {
 			time.Sleep(time.Second * 10)

@@ -13,6 +13,7 @@ require (
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sony/gobreaker v0.5.0 // indirect
+	github.com/stoewer/go-strcase v1.3.0 // indirect
 	github.com/typesense/typesense-go v1.0.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

@@ -29,3 +29,33 @@ CREATE TRIGGER user_trigger
   FOR EACH ROW
   EXECUTE PROCEDURE update_log();
 ```
+### conf.json
+db and typesense objects are connection settings. Important part is that every connection has a **schema** that will be used as **api.CollectionSchema** from [typesense/typesense-go](https://github.com/typesense/typesense-go)
+```
+{
+  "db": {
+    "url": "user=admin password=xuuoH8FXDSTQkWFA7QRg host=localhost port=5432 dbname=dev sslmode=disable"
+  },
+  "typesense": {
+    "url": "http://localhost:8108",
+    "apiKey": "xyz",
+    "connectionTimeout": 5,
+    "circuitBreakerMaxRequest": 50,
+    "circuitBreakerMaxInterval": 120,
+    "circuitBreakerMaxTimeout": 60
+  },
+  "collections": {
+    "users": {
+      "tableName": "users",
+      "sql": "select * from users where updated_at >= $1 LIMIT 100",
+      "schema" : {
+        "name": "users",  
+        "fields": [
+          {"name": "is_active", "type": "bool"},
+          {"name": ".*", "type": "auto" }
+        ]
+      }
+    }
+  }
+}
+```

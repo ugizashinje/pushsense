@@ -1,7 +1,8 @@
 {
   "db": {
-    "url": "user=admin password=xuuoH8FXDSTQkWFA7QRg host=localhost port=5432 dbname=dev sslmode=disable"
+    "url": "user=restate_owner password=EWJgNwtBrC20 host=ep-round-base-a2uslmgn.eu-central-1.aws.neon.tech port=5432 dbname=restate sslmode=require"
   },
+  
   "typesense": {
     "url": "http://localhost:8108",
     "apiKey": "xyz",
@@ -17,10 +18,63 @@
       "schema" : {
         "name": "users",  
         "fields": [
-          {"name": "is_active", "type": "bool"},
-          {"name": ".*", "type": "auto" }
+          {"name": "isActive", "type": "bool"},
+          {"name": "email", "type": "string"},
+          {"name": "firstName", "type": "string"},
+          {"name": "lastName", "type": "string"},
+          {"name": "mn", "type": "string"},
+          {"name": "birthplace", "type": "string"},
+          {"name": "phone", "type": "string"},
+          {"name": "addressId", "type": "string"}
+        ]
+      }
+    },
+    "apartments": {
+      "tableName": "apartments",
+      "sql": "select * from apartments where updated_at >= $1 LIMIT 100",
+      "mapping" : {
+        "city" : "location.lvl0",
+        "muni" : "location.lvl1",
+        "hood" : "location.lvl2"        
+      },
+      "schema" : {
+        "name": "apartments",  
+        "fields": [
+          {"name": "street", "type": "string"},
+          {"name": "location.lvl0", "type": "string"},
+          {"name": "location.lvl1", "type": "string"},
+          {"name": "location.lvl2", "type": "string"},
+         
+          {"name": "age", "type": "int32"},
+          {"name": "totalFloors", "type": "int32"},
+          {"name": "basement", "type": "bool"},
+          {"name": "groundFloor", "type": "bool"},
+          {"name": "lastFloor", "type": "bool"},
+          {"name": "highGroundFloor", "type": "bool"},
+          {"name": "monthlyFees", "type": "int32"},
+          {"name": "tags", "type": "string[]"},
+          {"name": "sallon", "type": "bool"},
+          {"name": "duplex", "type": "bool"},
+          {"name": "penthouse", "type": "bool"},
+          {"name": "energyEff", "type": "bool"},
+ 
+          {"name": "condition", "type": "string"},
+          {"name": "heating", "type": "string"},
+          {"name": "rooms", "type": "string"},
+
+          {"name": "registered", "type": "bool"},
+          {"name": "occupiable", "type": "bool"},
+          {"name": "withinHouse", "type": "bool"},
+          {"name": "taxRefundable", "type": "bool"},
+          {"name": "swappable", "type": "bool"},
+          {"name": "morgage", "type": "bool"},
+          {"name": "urgent", "type": "bool"},
+          {"name": "seller", "type": "string"}
         ]
       }
     }
   }
 }
+
+
+
