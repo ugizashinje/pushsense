@@ -39,6 +39,7 @@
       },
       "schema" : {
         "name": "apartments",  
+        "enable_nested_fields": true,
         "fields": [
           {"name": "street", "type": "string"},
           {"name": "location.lvl0", "type": "string"},
@@ -69,7 +70,9 @@
           {"name": "swappable", "type": "bool"},
           {"name": "morgage", "type": "bool"},
           {"name": "urgent", "type": "bool"},
-          {"name": "seller", "type": "string"}
+          {"name": "seller", "type": "string"},
+          {"name": "floorPlan", "type": "auto", "index" : false},
+          {"name": "allRoundTour", "type": "auto", "index" : false}
         ]
       }
     }

@@ -1,6 +1,7 @@
 package listener
 
 import (
+	"encoding/json"
 	"log"
 	"time"
 
@@ -108,12 +109,19 @@ func listenCollection(collection string, colConfig conf.Entry) {
 				} else {
 					key = strcase.LowerCamelCase(k)
 				}
-				if t, ok := typeMapping[k]; ok {
+				if t, ok := typeMapping[key]; ok {
 					switch t {
 					case "string[]":
 						instance := pq.StringArray{}
 						instance.Scan(v)
 						mapRow[key] = instance
+					case "auto":
+						bytes, ok := v.([]byte)
+						if !ok {
+							mapRow[key] = v
+							break
+						}
+						mapRow[key] = json.RawMessage(bytes)
 					default:
 						mapRow[key] = v
 					}
